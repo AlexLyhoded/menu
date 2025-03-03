@@ -1,4 +1,6 @@
+using menu.Interface;
 using menu.Model;
+using menu.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -11,6 +13,9 @@ builder.Services.AddRazorPages();
 // Подключаем базу данных PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IDishRepository, DishRepository>();
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 
 // Добавляем контроллеры с поддержкой API
 builder.Services.AddControllers();
