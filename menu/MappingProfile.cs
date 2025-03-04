@@ -40,5 +40,16 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Dishes, opt => opt.MapFrom(src => src.DishesId))
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description));
+        CreateMap<Order, OrderDto>()
+            .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.DishesId, opt => opt.MapFrom(src => src.Dishes))
+            .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => src.OrderDate))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status)); 
+        CreateMap<OrderDto, Order>()
+            .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
+            .ForMember(dest => dest.Dishes, opt => opt.MapFrom(src => src.DishesId))
+            .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => src.OrderDate))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+
     }
 }

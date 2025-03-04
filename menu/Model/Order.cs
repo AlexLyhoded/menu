@@ -1,21 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace menu.Model
 {
     public class Order
     {
-        [Key]
+        [JsonIgnore]
         public Guid Id { get; set; }
-        [Required]
+        [JsonIgnore]
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
-        public string Status { get; set; } = "В обробці"; // По умолчанию
+        public string Status { get; set; } = "В обробці"; 
 
-        // Связь Many-to-Many с блюдами
         public List<Guid> Dishes { get; set; } = new List<Guid>();
 
     }
