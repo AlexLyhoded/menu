@@ -8,7 +8,8 @@ namespace menu.Model
 
         public DbSet<Dish> Dishes { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<Menu> Menus { get; set; }
+        public DbSet<Receipt> Receipts { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

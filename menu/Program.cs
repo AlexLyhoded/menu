@@ -1,6 +1,7 @@
 using menu.Interface;
 using menu.Model;
 using menu.Repository;
+using menu.Swagger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -15,7 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IDishRepository, DishRepository>();
-builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 // Добавляем контроллеры с поддержкой API
 builder.Services.AddControllers();
@@ -29,8 +30,10 @@ builder.Services.AddSwaggerGen(c =>
         Title = "Restaurant Menu API",
         Version = "v1"
     });
+    c.SchemaFilter<DecimalSchemaFilter>();
+    c.SchemaFilter<DisplaySchemaFilter>();
 });
-
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 var app = builder.Build();
 
 // Настройка middleware
@@ -51,6 +54,7 @@ app.MapRazorPages();
 app.MapControllers(); // Добавляем поддержку API-контроллеров
 
 // Включаем Swagger UI
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

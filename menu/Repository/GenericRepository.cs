@@ -25,6 +25,11 @@ namespace menu.Repository
         {
             return await _dbSet.FindAsync(id);
         }
+        public async Task<T> GetByNameAsync(string title)
+        {
+            return await _dbSet.FirstOrDefaultAsync(entity => EF.Property<string>(entity, "Title") == title);
+        }
+
 
         public async Task AddAsync(T entity)
         {

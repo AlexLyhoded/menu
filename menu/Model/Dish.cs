@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace menu.Model
 {
     public class Dish
     {
-        [Key]
+        [JsonIgnore]
         public Guid Id { get; set; }
 
         [Required, MaxLength(100)]
@@ -15,12 +16,8 @@ namespace menu.Model
 
         [Required]
         public decimal Price { get; set; }
-
+        [JsonIgnore]
         public byte[] Picture { get; set; }
-
-        [ForeignKey("Category")]
-        public Guid CategoryId { get; set; }
-        public Category Category { get; set; }
 
         public bool IsAvailable { get; set; } = true;
 

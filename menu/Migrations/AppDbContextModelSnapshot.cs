@@ -44,7 +44,7 @@ namespace menu.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("menu.Model.Dish", b =>
@@ -82,7 +82,7 @@ namespace menu.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Dishes");
+                    b.ToTable("Dishes", (string)null);
                 });
 
             modelBuilder.Entity("menu.Model.Menu", b =>
@@ -115,7 +115,7 @@ namespace menu.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Menus");
+                    b.ToTable("Menus", (string)null);
                 });
 
             modelBuilder.Entity("menu.Model.Dish", b =>
