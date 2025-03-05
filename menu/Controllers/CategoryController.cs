@@ -5,118 +5,76 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace menu.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CategoryController : ControllerBase
+    public class CategoryController : Controller
     {
         private readonly ICategoryRepository _categoryRepository;
-        private readonly IMapper _mapper;
         private readonly IDishRepository _dishRepository;
 
-        public CategoryController(ICategoryRepository categoryRepository, IMapper mapper, IDishRepository dishRepository)
+        public CategoryController(ICategoryRepository categoryRepository, IDishRepository dishRepository)
         {
             _categoryRepository = categoryRepository;
-            _mapper = mapper;
             _dishRepository = dishRepository;
         }
-
-        // Получить все категории
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var categories = await _categoryRepository.GetAllAsync();
-            var categoryDtos = _mapper.Map<IEnumerable<CategoryDto>>(categories);
-            return Ok(categoryDtos);
-        }
-
-        // Получить одну категорию
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) return NotFound();
-            var categoryDto = _mapper.Map<CategoryDto>(category);
-            return Ok(categoryDto);
-        }
-
         // Добавить категорию
+        public async Task<IActionResult> Create(Guid? id)
+        {
+            Category model;
+            if (id.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(id.Value);
+                if (category == null)
+                {
+                    return NotFound();
+                }
+                model = category;
+            }
+            else
+            {
+                model = new Category();
+            }
+            ViewBag.DishesList = await _dishRepository.GetDistinctTitlesWithIdsAsync();
+            return View(model);
+        }
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CategoryDto categoryDto)
+        public async Task<IActionResult> Create(Category category, List<Guid> Dishes, Guid? id)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (categoryDto.Dishes == null || !categoryDto.Dishes.Any())
+            if (id.HasValue)
             {
-                return BadRequest("Dishes cannot be null or empty.");
+                var existingCategory = await _categoryRepository.GetByIdAsync(id.Value);
+                if (existingCategory == null)
+                {
+                    return NotFound();
+                }
+                existingCategory.Title = category.Title;
+                existingCategory.Description = category.Description;
+                existingCategory.Dishes = Dishes ?? new List<Guid>(); // Сохраняем выбранные блюда
+
+                await _categoryRepository.UpdateAsync(existingCategory);
+            }
+            else
+            {
+                category.Id = Guid.NewGuid();
+                category.Dishes = Dishes ?? new List<Guid>(); // Сохраняем выбранные блюда
+                await _categoryRepository.AddAsync(category);
             }
 
-            // Загружаем все блюда по их названиям
-            List<Guid> dishes = new List<Guid>();
-            foreach (var dishTitle in categoryDto.Dishes)
-            {
-                var dish = await _dishRepository.GetByNameAsync(dishTitle);
-                if (dish != null)
-                {
-                    dishes.Add(dish.Id);
-                }
-                else
-                {
-                    // Если блюдо не найдено, возвращаем ошибку
-                    return BadRequest($"Dish with title '{dishTitle}' not found.");
-                }
-            }
-
-            // Маппим DTO в сущность для создания категории
-            categoryDto.DishesId = dishes;
-            var category = _mapper.Map<Category>(categoryDto);
-            category.Id = Guid.NewGuid();
-            await _categoryRepository.AddAsync(category);
-
-            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+            return RedirectToAction("ManageCategories", "Admin");
         }
-
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] CategoryDto categoryDto)
-        {
-            var existingCategory = await _categoryRepository.GetByIdAsync(id);
-            if (existingCategory == null) return NotFound();
-
-            if (categoryDto.Dishes != null)
-            {
-                // Загружаем все блюда по их названиям
-                List<Guid> dishes = new List<Guid>();
-                foreach (var dishTitle in categoryDto.Dishes)
-                {
-                    var dish = await _dishRepository.GetByNameAsync(dishTitle);
-                    if (dish != null)
-                    {
-                        dishes.Add(dish.Id);
-                    }
-                    else
-                    {
-                        // Если блюдо не найдено, можно обработать это как ошибку
-                        return BadRequest($"Dish with title '{dishTitle}' not found.");
-                    }
-                }
-                categoryDto.DishesId = dishes;
-            }
-            
-            // Маппим DTO в сущность для обновления
-            _mapper.Map(categoryDto, existingCategory);
-
-            await _categoryRepository.UpdateAsync(existingCategory);
-
-            return NoContent();
-        }
-
-
         // Удалить категорию
-        [HttpDelete("{id}")]
+        [HttpPost]
         public async Task<IActionResult> Delete(Guid id)
         {
+            // Убедитесь, что объект существует в базе данных
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
             await _categoryRepository.DeleteAsync(id);
-            return NoContent();
+            return RedirectToAction("ManageCategories", "Admin");
         }
     }
 }

@@ -1,124 +1,85 @@
-﻿using AutoMapper;
+﻿using menu.Extensions;
 using menu.Interface;
 using menu.Model;
-using menu.Repository;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc; // Для работы с сессией
 
-[Route("api/orders")]
-[ApiController]
-public class OrderController : ControllerBase
+public class OrderController : Controller
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IDishRepository _dishRepository;
-    private readonly IMapper _mapper;
 
-    public OrderController(IOrderRepository orderRepository, IMapper mapper, IDishRepository dishRepository)
+    public OrderController(IOrderRepository orderRepository, IDishRepository dishRepository)
     {
         _orderRepository = orderRepository;
-        _mapper = mapper;
         _dishRepository = dishRepository;
     }
 
-    // Отримати всі замовлення
-    [HttpGet]
-    public async Task<IActionResult> GetAllOrders()
-    {
-        var orders = await _orderRepository.GetAllAsync();
-        var ordersDto = _mapper.Map<IEnumerable<OrderDto>>(orders);
-        return Ok(ordersDto);
-    }
-
-    // Отримати замовлення за ID
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetOrderById(Guid id)
-    {
-        var order = await _orderRepository.GetByIdAsync(id);
-        if (order == null)
-            return NotFound("Замовлення не знайдено");
-
-        return Ok(_mapper.Map<OrderDto>(order));
-    }
-
-    // Створити нове замовлення
+    // Метод для добавления блюда в заказ
     [HttpPost]
-    public async Task<ActionResult> CreateOrder([FromForm] OrderDto orderDto)
+    public async Task<IActionResult> AddToOrder(Guid dishId)
     {
-        if (orderDto == null)
-            return BadRequest("Некоректні дані");
-        List<Guid> dishes = new List<Guid>();
-        decimal price = 0;
-        foreach (var dishTitle in orderDto.Dishes)
+        var userId = HttpContext.Session.GetString("UserId") ?? Guid.NewGuid().ToString();
+        HttpContext.Session.SetString("UserId", userId);
+
+        // Ищем незавершённый заказ пользователя
+        var order = await _orderRepository.GetActiveOrderByUserIdAsync(userId);
+
+        if (order == null)
         {
-            var dish = await _dishRepository.GetByNameAsync(dishTitle);
-            if (dish != null)
+            // Создаём новый заказ
+            order = new Order
             {
-                dishes.Add(dish.Id);
-                price += dish.Price;
-            }
-            else
-            {
-                // Если блюдо не найдено, возвращаем ошибку
-                return BadRequest($"Dish with title '{dishTitle}' not found.");
-            }
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                IsCompleted = false,
+                Dishes = new List<Guid>(),
+                TotalAmount = 0
+            };
+            await _orderRepository.AddAsync(order);
         }
-        orderDto.DishesId = dishes;
-        orderDto.TotalAmount = price;
-        var order = _mapper.Map<Order>(orderDto);
+
+        // Добавляем блюдо
+        var dish = await _dishRepository.GetByIdAsync(dishId);
+        if (dish == null) return NotFound("Блюдо не найдено");
+
+        order.Dishes.Add(dish.Id);
+        order.TotalAmount += dish.Price;
+
+        await _orderRepository.UpdateAsync(order);
+
+        return RedirectToAction("Index", "Home");
+    }
+
+
+    // Просмотр заказа
+    public IActionResult ViewOrder()
+    {
+        var order = HttpContext.Session.GetObject<Order>("CurrentOrder");
+        return View(order);
+    }
+
+    // Завершение заказа
+    [HttpPost]
+    public async Task<IActionResult> CompleteOrder()
+    {
+        var order = HttpContext.Session.GetObject<Order>("CurrentOrder");
+        if (order == null || !order.Dishes.Any())
+        {
+            return BadRequest("Замовлення порожнє");
+        }
+
+        // Сохраняем заказ в БД
         await _orderRepository.AddAsync(order);
 
-        return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, _mapper.Map<OrderDto>(order));
+        // Очищаем сессию
+        HttpContext.Session.Remove("CurrentOrder");
+
+        return RedirectToAction("OrderSuccess");
     }
 
-    // Оновити замовлення
-    [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateOrder(Guid id, [FromForm] OrderDto orderDto)
+    public IActionResult OrderSuccess()
     {
-        if (orderDto == null)
-            return BadRequest("Некоректні дані");
-
-        var existingOrder = await _orderRepository.GetByIdAsync(id);
-        if (existingOrder == null)
-            return NotFound("Замовлення не знайдено");
-        if (orderDto.Dishes != null)
-        {
-            // Загружаем все блюда по их названиям
-            List<Guid> dishes = new List<Guid>();
-            decimal price = 0;
-            foreach (var dishTitle in orderDto.Dishes)
-            {
-                var dish = await _dishRepository.GetByNameAsync(dishTitle);
-                if (dish != null)
-                {
-                    dishes.Add(dish.Id);
-                    price += dish.Price;
-                }
-                else
-                {
-                    // Если блюдо не найдено, можно обработать это как ошибку
-                    return BadRequest($"Dish with title '{dishTitle}' not found.");
-                }
-            }
-            orderDto.DishesId = dishes;
-            orderDto.TotalAmount = price;
-        }
-        _mapper.Map(orderDto, existingOrder);
-        await _orderRepository.UpdateAsync(existingOrder);
-
-        return NoContent();
-    }
-
-    // Видалити замовлення
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteOrder(Guid id)
-    {
-        var existingOrder = await _orderRepository.GetByIdAsync(id);
-        if (existingOrder == null)
-            return NotFound("Замовлення не знайдено");
-
-        await _orderRepository.DeleteAsync(id);
-        return NoContent();
+        return View();
     }
 }

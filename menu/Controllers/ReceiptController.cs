@@ -1,13 +1,7 @@
 ﻿using menu.Interface;
 using menu.Model;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-[Route("api/receipts")]
-[ApiController]
-public class ReceiptController : ControllerBase
+public class ReceiptController : Controller
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly IOrderRepository _orderRepository;

@@ -1,0 +1,45 @@
+﻿@page
+@model menu.Pages.Admin.ManageDishesModel
+@{
+    ViewData["Title"] = "Управління стравами";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Управління стравами</h1>
+        <p class="lead">Перегляд, редагування та видалення страв.</p>
+        <a asp-controller="Dish" asp-action="Create" class="btn btn-success mb-3">Додати нову страву</a>
+    </div>
+
+    <div class="row mt-4">
+        @foreach (var dish in Model.Dishes)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@dish.Title</h5>
+                        <p class="card-text">@dish.Description</p>
+                        <p><strong>Ціна:</strong> @dish.Price грн.</p>
+
+                        <!-- Если изображение существует, показываем его с ограничением по размеру -->
+                        @if (dish.Picture != null)
+                        {
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(dish.Picture)" class="img-fluid dish-img" alt="Фото страви" />
+                        }
+                        else
+                        {
+                            <p>Немає фото</p>
+                        }
+
+                        <a asp-controller="Dish" asp-action="Create" asp-route-id="@dish.Id" class="btn btn-primary">Редагувати</a>
+                        <form method="post" asp-controller="Dish" asp-action="Delete" asp-route-id="@dish.Id" onsubmit="return confirm('Ви впевнені, що хочете видалити цю страву?');">
+                            <button type="submit" class="btn btn-danger">Видалити</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

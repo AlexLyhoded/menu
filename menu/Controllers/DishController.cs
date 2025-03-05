@@ -2,14 +2,12 @@
 using menu.Interface;
 using menu.Model;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 
 namespace menu.Controllers
 {
-    [Route("api/[controller]")]
-    [Produces("application/json")]
-    [ApiController]
-    public class DishController : ControllerBase
+    public class DishController : Controller
     {
         private readonly IDishRepository _dishRepository;
         private readonly IMapper _mapper;
@@ -19,33 +17,31 @@ namespace menu.Controllers
             _dishRepository = dishRepository;
             _mapper = mapper;
         }
-
-        // Получить все блюда
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> Create(Guid? id)
         {
-            var dishes = await _dishRepository.GetAllAsync();
-            var dishDtos = _mapper.Map<List<DishDto>>(dishes); // Маппим список Dish в список DishDto
-            return Ok(dishDtos);
+            Dish model;
+            if (id.HasValue)
+            {
+                var dish = await _dishRepository.GetByIdAsync(id.Value);
+                if (dish == null) return NotFound();
+                model = dish;
+            }
+            else
+            {
+                model = new Dish();
+            }
+
+            return View(model);
         }
 
-        // Получить одно блюдо
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var dish = await _dishRepository.GetByIdAsync(id);
-            if (dish == null) return NotFound();
-            var dishDto = _mapper.Map<DishDto>(dish); // Маппим один объект Dish в DishDto
-            return Ok(dishDto);
-        }
-
-        // Добавить блюдо
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] DishDto dishDto, IFormFile file)
+        public async Task<IActionResult> Create(Dish dish, IFormFile? file, Guid? id)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             byte[] pictureData = null;
+
+            // Если файл был передан, загружаем его
             if (file != null)
             {
                 using (var memoryStream = new MemoryStream())
@@ -54,41 +50,57 @@ namespace menu.Controllers
                     pictureData = memoryStream.ToArray();
                 }
             }
-            var dish = _mapper.Map<Dish>(dishDto); // Маппим DishDto в Dish
 
-            dish.Id = Guid.NewGuid();
-            dish.Picture = pictureData;
-
-            await _dishRepository.AddAsync(dish);
-            return CreatedAtAction(nameof(GetById), new { id = dish.Id }, dish);
-        }
-
-        // Обновить блюдо
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] DishDto dishDto, IFormFile file)
-        {
-            var dish = await _dishRepository.GetByIdAsync(id);
-            if (dish == null) return NotFound();
-            _mapper.Map(dishDto, dish); // Маппим данные из DishDto в существующее блюдо
-
-            if (file != null)
+            if (id.HasValue)
             {
-                using (var memoryStream = new MemoryStream())
+                // Получаем существующее блюдо
+                var existingDish = await _dishRepository.GetByIdAsync(id.Value);
+                if (existingDish == null)
                 {
-                    await file.CopyToAsync(memoryStream);
-                    dish.Picture = memoryStream.ToArray();
+                    return NotFound();
                 }
+                existingDish.Title = dish.Title;
+                existingDish.Price = dish.Price;
+                existingDish.Description = dish.Description;
+                existingDish.IsAvailable = dish.IsAvailable;
+                existingDish.Weight = dish.Weight;
+
+                // Если фото новое, обновляем его
+                if (file != null)
+                {
+                    existingDish.Picture = pictureData;
+                }
+
+                    // Сохраняем обновления
+                    await _dishRepository.UpdateAsync(existingDish); // Обновляем существующее блюдо
+            }
+            else
+            {
+                // Генерируем новый Id и устанавливаем фото, если оно передано
+                dish.Id = Guid.NewGuid();
+                dish.Picture = pictureData;
+
+                // Сохраняем новое блюдо
+                await _dishRepository.AddAsync(dish); // Добавляем новое блюдо
             }
 
-            await _dishRepository.UpdateAsync(dish);
-            return NoContent();
+            return RedirectToAction("ManageDishes", "Admin");
         }
+
         // Удалить блюдо
-        [HttpDelete("{id}")]
+        [HttpPost]
         public async Task<IActionResult> Delete(Guid id)
         {
+            // Убедитесь, что объект существует в базе данных
+            var dish = await _dishRepository.GetByIdAsync(id);
+            if (dish == null)
+            {
+                return NotFound();
+            }
+
             await _dishRepository.DeleteAsync(id);
-            return NoContent();
+            return RedirectToAction("ManageDishes", "Admin");
         }
+
     }
 }

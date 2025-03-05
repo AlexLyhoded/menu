@@ -1,8 +1,6 @@
 using menu.Interface;
 using menu.Model;
 using menu.Repository;
-using menu.Swagger;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -20,22 +18,22 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReceiptRepository, ReceiptRepository>();
 
+// Добавляем поддержку сессий
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Время хранения сессии
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // Добавляем контроллеры с поддержкой API
 builder.Services.AddControllers();
 
 // Добавляем Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Restaurant Menu API",
-        Version = "v1"
-    });
-    c.SchemaFilter<DecimalSchemaFilter>();
-    c.SchemaFilter<DisplaySchemaFilter>();
-});
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+
 var app = builder.Build();
 
 // Настройка middleware
@@ -50,20 +48,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Включаем поддержку сессий
+app.UseSession();
+
 app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers(); // Добавляем поддержку API-контроллеров
 
-// Включаем Swagger UI
 
-if (app.Environment.IsDevelopment())
+app.UseEndpoints(endpoints =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Restaurant Menu API v1");
-    });
-}
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+});
 
 app.Run();

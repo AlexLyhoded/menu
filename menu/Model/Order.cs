@@ -6,9 +6,9 @@ namespace menu.Model
 {
     public class Order
     {
-        [JsonIgnore]
         public Guid Id { get; set; }
-        [JsonIgnore]
+        public string UserId { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
@@ -17,6 +17,7 @@ namespace menu.Model
         public string Status { get; set; } = "В обробці"; 
 
         public List<Guid> Dishes { get; set; } = new List<Guid>();
+        public bool IsCompleted { get; set; }
 
     }
 }

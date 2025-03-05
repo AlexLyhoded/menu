@@ -6,7 +6,6 @@ namespace menu.Model
 {
     public class Dish
     {
-        [JsonIgnore]
         public Guid Id { get; set; }
 
         [Required, MaxLength(100)]
@@ -16,10 +15,9 @@ namespace menu.Model
 
         [Required]
         public decimal Price { get; set; }
-        [JsonIgnore]
-        public byte[] Picture { get; set; }
+        public byte[]? Picture { get; set; }
 
-        public bool IsAvailable { get; set; } = true;
+        public bool IsAvailable { get; set; }
 
         public double Weight { get; set; }
     }
