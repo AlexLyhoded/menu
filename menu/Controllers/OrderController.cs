@@ -15,43 +15,48 @@ public class OrderController : Controller
         _dishRepository = dishRepository;
     }
 
-    // Метод для добавления блюда в заказ
     [HttpPost]
     public async Task<IActionResult> AddToOrder(Guid dishId)
     {
+        // Логируем, что метод был вызван
+        Console.WriteLine("Метод AddToOrder был вызван");
+
         var userId = HttpContext.Session.GetString("UserId") ?? Guid.NewGuid().ToString();
+        Console.WriteLine($"userId: {userId}");
+
         HttpContext.Session.SetString("UserId", userId);
 
-        // Ищем незавершённый заказ пользователя
         var order = await _orderRepository.GetActiveOrderByUserIdAsync(userId);
-
         if (order == null)
         {
-            // Создаём новый заказ
             order = new Order
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 IsCompleted = false,
-                Dishes = new List<Guid>(),
+                Dishes = new List<Dish>(),
                 TotalAmount = 0
             };
             await _orderRepository.AddAsync(order);
+            Console.WriteLine("Создан новый заказ");
         }
 
-        // Добавляем блюдо
         var dish = await _dishRepository.GetByIdAsync(dishId);
-        if (dish == null) return NotFound("Блюдо не найдено");
+        if (dish == null)
+        {
+            Console.WriteLine("Блюдо не найдено");
+            return NotFound("Блюдо не найдено");
+        }
 
-        order.Dishes.Add(dish.Id);
+        order.Dishes.Add(dish);
         order.TotalAmount += dish.Price;
 
         await _orderRepository.UpdateAsync(order);
 
+        Console.WriteLine($"Блюдо {dish.Title} добавлено в заказ");
+
         return RedirectToAction("Index", "Home");
     }
-
-
     // Просмотр заказа
     public IActionResult ViewOrder()
     {

@@ -13,8 +13,8 @@ using menu.Model;
 namespace menu.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250304210751_update_db")]
-    partial class update_db
+    [Migration("20250307121751_add_dish_id_for_order")]
+    partial class add_dish_id_for_order
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -63,8 +63,10 @@ namespace menu.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid");
+
                     b.Property<byte[]>("Picture")
-                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<decimal>("Price")
@@ -80,6 +82,8 @@ namespace menu.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OrderId");
+
                     b.ToTable("Dishes");
                 });
 
@@ -89,9 +93,12 @@ namespace menu.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<List<Guid>>("Dishes")
+                    b.Property<List<Guid>>("DishesId")
                         .IsRequired()
                         .HasColumnType("uuid[]");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
@@ -102,6 +109,10 @@ namespace menu.Migrations
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -128,12 +139,24 @@ namespace menu.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("TotalAmount")
+                    b.Property<decimal?>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Receipts");
+                });
+
+            modelBuilder.Entity("menu.Model.Dish", b =>
+                {
+                    b.HasOne("menu.Model.Order", null)
+                        .WithMany("Dishes")
+                        .HasForeignKey("OrderId");
+                });
+
+            modelBuilder.Entity("menu.Model.Order", b =>
+                {
+                    b.Navigation("Dishes");
                 });
 #pragma warning restore 612, 618
         }

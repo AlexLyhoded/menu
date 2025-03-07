@@ -1,90 +1,76 @@
 ﻿using menu.Interface;
 using menu.Model;
 using Microsoft.AspNetCore.Mvc;
-public class ReceiptController : Controller
+using System;
+using System.Threading.Tasks;
+
+namespace menu.Controllers
 {
-    private readonly IReceiptRepository _receiptRepository;
-    private readonly IOrderRepository _orderRepository;
-
-    public ReceiptController(
-        IReceiptRepository receiptRepository,
-        IOrderRepository orderRepository)
+    public class ReceiptController : Controller
     {
-        _receiptRepository = receiptRepository;
-        _orderRepository = orderRepository;
-    }
+        private readonly IReceiptRepository _receiptRepository;
+        private readonly IOrderRepository _orderRepository;
 
-    // Отримати всі чеки
-    [HttpGet]
-    public async Task<ActionResult> GetAllReceipts()
-    {
-        var receipts = await _receiptRepository.GetAllAsync();
-        return Ok(receipts);
-    }
+        public ReceiptController(IReceiptRepository receiptRepository, IOrderRepository orderRepository)
+        {
+            _receiptRepository = receiptRepository;
+            _orderRepository = orderRepository;
+        }
 
-    // Отримати чек за ID
-    [HttpGet("{id}")]
-    public async Task<ActionResult> GetReceiptById(Guid id)
-    {
-        var receipt = await _receiptRepository.GetByIdAsync(id);
-        if (receipt == null)
-            return NotFound("Чек не знайдено");
+        // Відображення сторінки оплати з замовленням
+        [HttpGet("payment/{orderId}")]
+        public async Task<IActionResult> Payment(Guid orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                return NotFound("Замовлення не знайдено");
+            }
 
-        return Ok(receipt);
-    }
+            // Надсилаємо замовлення на сторінку для відображення
+            return View(order);
+        }
 
-    // Створити новий чек (TotalAmount заповнюється з Order)
-    [HttpPost]
-    public async Task<ActionResult> CreateReceipt([FromForm] Receipt receipt)
-    {
-        if (receipt == null || receipt.OrderId == Guid.Empty)
-            return BadRequest("Некоректні дані");
+        // Створення чека з вибраним методом оплати
+        [HttpPost("create-receipt")]
+        public async Task<IActionResult> CreateReceipt(Guid orderId, string paymentMethod)
+        {
+            // Отримуємо замовлення по ID
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                return NotFound("Замовлення не знайдено");
+            }
 
-        var order = await _orderRepository.GetByIdAsync(receipt.OrderId);
-        if (order == null)
-            return NotFound("Замовлення не знайдено");
+            // Створюємо новий чек
+            var receipt = new Receipt
+            {
+                Id = Guid.NewGuid(),
+                OrderId = order.Id,
+                TotalAmount = order.TotalAmount,
+                PaymentMethod = paymentMethod,
+                Date = DateTime.UtcNow,
+                Status = "Оплачено"
+            };
 
-        receipt.TotalAmount = order.TotalAmount; // Автоматично встановлюємо суму замовлення
-        receipt.Date = DateTime.UtcNow;
+            // Зберігаємо чек
+            await _receiptRepository.AddAsync(receipt);
 
-        await _receiptRepository.AddAsync(receipt);
+            // Перенаправляємо користувача на сторінку успішної оплати
+            return RedirectToAction("PaymentSuccess", new { receiptId = receipt.Id });
+        }
 
-        return CreatedAtAction(nameof(GetReceiptById), new { id = receipt.Id }, receipt);
-    }
+        // Сторінка успішної оплати
+        [HttpGet("payment-success/{receiptId}")]
+        public async Task<IActionResult> PaymentSuccess(Guid receiptId)
+        {
+            var receipt = await _receiptRepository.GetByIdAsync(receiptId);
+            if (receipt == null)
+            {
+                return NotFound("Чек не знайдено");
+            }
 
-    // Оновити чек
-    [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateReceipt(Guid id, [FromForm] Receipt receipt)
-    {
-        if (receipt == null || receipt.OrderId == Guid.Empty)
-            return BadRequest("Некоректні дані");
-
-        var existingReceipt = await _receiptRepository.GetByIdAsync(id);
-        if (existingReceipt == null)
-            return NotFound("Чек не знайдено");
-
-        var order = await _orderRepository.GetByIdAsync(receipt.OrderId);
-        if (order == null)
-            return NotFound("Замовлення не знайдено");
-
-        existingReceipt.OrderId = receipt.OrderId;
-        existingReceipt.TotalAmount = order.TotalAmount; // Оновлюємо суму
-        existingReceipt.Date = DateTime.UtcNow;
-
-        await _receiptRepository.UpdateAsync(existingReceipt);
-
-        return NoContent();
-    }
-
-    // Видалити чек
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteReceipt(Guid id)
-    {
-        var existingReceipt = await _receiptRepository.GetByIdAsync(id);
-        if (existingReceipt == null)
-            return NotFound("Чек не знайдено");
-
-        await _receiptRepository.DeleteAsync(id);
-        return NoContent();
+            return View(receipt); // Відправляємо чек на сторінку для відображення
+        }
     }
 }

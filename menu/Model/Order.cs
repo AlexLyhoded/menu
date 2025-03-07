@@ -16,7 +16,8 @@ namespace menu.Model
 
         public string Status { get; set; } = "В обробці"; 
 
-        public List<Guid> Dishes { get; set; } = new List<Guid>();
+        public List<Dish> Dishes { get; set; }
+        public List<Guid> DishesId { get; set; }
         public bool IsCompleted { get; set; }
 
     }

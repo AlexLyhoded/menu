@@ -6,14 +6,12 @@ namespace menu.Model
 {
     public class Receipt
     {
-        [JsonIgnore]
         public Guid Id { get; set; }
 
         [Required]
         public Guid OrderId { get; set; }  // Привязка к заказу
 
         [Column(TypeName = "decimal(18,2)")]
-        [JsonIgnore]
         public decimal? TotalAmount { get; set; }  // Сумма
 
         [Required]

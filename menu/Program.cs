@@ -29,7 +29,7 @@ builder.Services.AddSession(options =>
 
 // Добавляем контроллеры с поддержкой API
 builder.Services.AddControllers();
-
+builder.Services.AddControllersWithViews();
 // Добавляем Swagger
 builder.Services.AddEndpointsApiExplorer();
 
@@ -57,11 +57,9 @@ app.MapRazorPages();
 app.MapControllers(); // Добавляем поддержку API-контроллеров
 
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
-});
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
 
 app.Run();

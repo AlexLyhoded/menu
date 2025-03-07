@@ -10,12 +10,10 @@ namespace menu.Controllers
     public class DishController : Controller
     {
         private readonly IDishRepository _dishRepository;
-        private readonly IMapper _mapper;
 
-        public DishController(IDishRepository dishRepository, IMapper mapper)
+        public DishController(IDishRepository dishRepository)
         {
             _dishRepository = dishRepository;
-            _mapper = mapper;
         }
         public async Task<IActionResult> Create(Guid? id)
         {

@@ -1,0 +1,21 @@
+﻿@model menu.Model.Order
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата замовлення</title>
+</head>
+<body>
+    <h2>Ваше замовлення</h2>
+    <p>Номер замовлення: @Model.Id</p>
+    <p>Сума: @Model.TotalAmount</p>
+
+    <form method="post" action="/create-receipt">
+        <input type="hidden" name="orderId" value="@Model.Id" />
+        <button type="submit" name="paymentMethod" value="Готівка">Оплатити готівкою</button>
+        <button type="submit" name="paymentMethod" value="Карта">Оплатити карткою</button>
+    </form>
+</body>
+</html>
