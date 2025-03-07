@@ -1,0 +1,50 @@
+﻿@page
+@model menu.Pages.Admin.ManageCategoriesModel
+@{
+    ViewData["Title"] = "Управління категоріями";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<a href="@Url.Page("/Admin/Index")" class="btn btn-secondary my-3">На головну</a>
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Управління категоріями</h1>
+        <p class="lead">Перегляд, редагування та видалення категорій.</p>
+        <a asp-controller="Category" asp-action="Create" class="btn btn-success mb-3">Додати нову категорію</a>
+    </div>
+
+    <div class="row mt-4">
+        @foreach (var category in Model.Categories)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@category.Title</h5>
+                        <p class="card-text">@category.Description</p>
+
+                        <p><strong>Страви:</strong></p>
+                        @if (category.Dishes.Any())
+                        {
+                            <ul class="list-group">
+                                @foreach (var dishTitle in category.Dishes)
+                                {
+                                    <li class="list-group-item">@dishTitle</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p>Немає страв</p>
+                        }
+
+                        <a asp-controller="Category" asp-action="Create" asp-route-id="@category.Id" class="btn btn-primary">Редагувати</a>
+                        <form method="post" asp-controller="Category" asp-action="Delete" asp-route-id="@category.Id" onsubmit="return confirm('Ви впевнені, що хочете видалити цю страву?');">
+                            <button type="submit" class="btn btn-danger">Видалити</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

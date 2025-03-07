@@ -1,0 +1,47 @@
+﻿@page
+@model menu.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Адмін-панель";
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<a href="@Url.Page("/Index")" class="btn btn-secondary my-3">На головну</a>
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Адмін-панель</h1>
+        <p class="lead">Керуйте меню, замовленнями та оплатою легко!</p>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Страви</h5>
+                    <p class="card-text">Додавайте, редагуйте або видаляйте страви у меню.</p>
+                    <!-- Переход на ManageDishes -->
+                    <a asp-page="/Admin/ManageDishes" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Категорії</h5>
+                    <p class="card-text">Керуйте категоріями страв для зручного перегляду.</p>
+                    <!-- Переход на ManageCategories -->
+                    <a asp-page="/Admin/ManageCategories" class="btn btn-success">Перейти</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Замовлення</h5>
+                    <p class="card-text">Переглядайте та обробляйте замовлення клієнтів.</p>
+                    <a asp-page="/Admin/ManageOrders" class="btn btn-warning">Перейти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

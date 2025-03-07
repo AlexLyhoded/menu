@@ -1,0 +1,20 @@
+﻿@model menu.Model.Receipt
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата успішна</title>
+</head>
+<body>
+    <h2>Дякуємо за оплату!</h2>
+    <p>Ваш чек:</p>
+    <p>Номер чека: @Model.Id</p>
+    <p>Замовлення №: @Model.OrderId</p>
+    <p>Сума: @Model.TotalAmount</p>
+    <p>Метод оплати: @Model.PaymentMethod</p>
+    <p>Дата: @Model.Date</p>
+    <p>Статус: @Model.Status</p>
+</body>
+</html>

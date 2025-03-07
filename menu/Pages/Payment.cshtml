@@ -1,0 +1,55 @@
+﻿@page "{orderId:guid}"
+@model menu.Pages.PaymentModel
+@{
+    ViewData["Title"] = "Оплата замовлення";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Оплата замовлення</h1>
+        <p class="lead">Будь ласка, перевірте своє замовлення перед оплатою.</p>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-3">Ваше замовлення</h4>
+
+        <!-- Таблица с заказанными блюдами -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Назва страви</th>
+                    <th>Кількість</th>
+                    <th>Ціна</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dish in Model.Order.Dishes)
+                {
+                    <tr>
+                        <td>@dish.Title</td>
+                        <td>1</td>
+                        <td>@dish.Price грн</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <h4 class="text-end mt-3">Загальна сума: <strong>@Model.Order.TotalAmount грн</strong></h4>
+    </div>
+
+    <div class="text-center mt-4">
+        <form method="post">
+            <input type="hidden" name="orderId" value="@Model.Order.Id" />
+
+            <button type="submit" class="btn btn-success btn-lg mx-2" asp-page-handler="CreateReceipt" asp-route-paymentMethod="Готівка">
+                <i class="fas fa-wallet"></i> Оплатити готівкою
+            </button>
+
+            <button type="submit" class="btn btn-primary btn-lg mx-2" asp-page-handler="CreateReceipt" asp-route-paymentMethod="Карта">
+                <i class="fas fa-credit-card"></i> Оплатити карткою
+            </button>
+        </form>
+    </div>
+</div>
