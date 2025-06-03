@@ -15,7 +15,7 @@
     <div class="card shadow-sm p-4">
         <h4 class="mb-3">Ваше замовлення</h4>
 
-        <!-- Таблица с заказанными блюдами -->
+        <!-- 📋 Таблиця зі списком страв -->
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -29,7 +29,7 @@
                 {
                     <tr>
                         <td>@dish.Title</td>
-                        <td>1</td>
+                        <td>1</td> <!-- 📝 Якщо треба — зробити підрахунок кількості -->
                         <td>@dish.Price грн</td>
                     </tr>
                 }
@@ -40,16 +40,22 @@
     </div>
 
     <div class="text-center mt-4">
+        <!-- 💵 Форма для оплати готівкою -->
         <form method="post">
             <input type="hidden" name="orderId" value="@Model.Order.Id" />
-
             <button type="submit" class="btn btn-success btn-lg mx-2" asp-page-handler="CreateReceipt" asp-route-paymentMethod="Готівка">
                 <i class="fas fa-wallet"></i> Оплатити готівкою
             </button>
+        </form>
 
-            <button type="submit" class="btn btn-primary btn-lg mx-2" asp-page-handler="CreateReceipt" asp-route-paymentMethod="Карта">
+        <!-- 💳 Форма для оплати карткою через LiqPay -->
+        <form method="POST" action="https://www.liqpay.ua/api/3/checkout" accept-charset="utf-8">
+            <input type="hidden" name="data" value="@Model.LiqPayData" />
+            <input type="hidden" name="signature" value="@Model.LiqPaySignature" />
+            <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-credit-card"></i> Оплатити карткою
             </button>
         </form>
+
     </div>
 </div>
